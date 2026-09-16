@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Openpixel POC Demo</title>
+  <script>
+    // Asynchronous loader stub
+    (function(w, d, s, r) {
+      w[r] = w[r] || function() { (w[r].q = w[r].q || []).push(arguments); };
+      var js = d.createElement(s);
+      js.async = 1;
+      js.src = '/tag.js';
+      var f = d.getElementsByTagName(s)[0];
+      f.parentNode.insertBefore(js, f);
+    })(window, document, 'script', 'openpixel');
+
+    // Initialize tracker
+    openpixel('init', 'DEMO_APP_001', { endpoint: '/v1/collect' });
+  </script>
+</head>
+<body>
+  <h1>Analytics Tag Demo Page</h1>
+  <button id="cta-button" class="btn primary">Click me to trigger event</button>
+  <button id="error-button">Trigger Unhandled Error</button>
+
+  <script>
+    document.getElementById('cta-button').addEventListener('click', () => {
+      openpixel('track', 'custom_button_click', { plan: 'premium', price: 99 });
+    });
+
+    document.getElementById('error-button').addEventListener('click', () => {
+      throw new Error('Test client-side exception');
+    });
+  </script>
+</body>
+</html>

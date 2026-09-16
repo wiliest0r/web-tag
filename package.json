@@ -1,0 +1,17 @@
+{
+  "name": "web-tag",
+  "version": "0.1.0",
+  "description": "Ultra-lightweight analytics and telemetry web tag",
+  "type": "module",
+  "main": "dist/t.min.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "lint": "eslint src/",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "eslint": "^9.0.0"
+  },
+  "license": "MIT"
+}

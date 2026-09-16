@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  js-ci:
+    uses: wiliest0r/gh-actions-central/.github/workflows/js-tag-ci.yml@main
+    with:
+      node-version: '24'
+      max-gzip-size-kb: 5
