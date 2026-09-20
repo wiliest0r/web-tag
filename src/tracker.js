@@ -1,4 +1,5 @@
-import { getAnonymousId, getSessionId, generateUUID } from './identity.js';
+import { getDeviceId, getSessionId, generateUUID } from './identity.js';
+import { getDeviceFingerprint, loadExtendedFingerprint } from './fp.js';
 import { getClientContext } from './context.js';
 import { sendPayload } from './transport.js';
 import { initPerformanceMonitoring } from './performance.js';
@@ -29,6 +30,11 @@ export class Tracker {
     });
 
     this.initialized = true;
+
+    // Optionally schedule background extended fingerprinting without blocking
+    if (options.extendedFp !== false) {
+      loadExtendedFingerprint();
+    }
 
     // Trigger initial standard events
     this.track('session_start');
@@ -61,9 +67,12 @@ export class Tracker {
     if (!this.initialized) return;
 
     const dispatch = () => {
+      const deviceId = getDeviceId();
       const payload = {
         app_id: this.appId,
-        anonymous_id: getAnonymousId(),
+        device_id: deviceId,
+        device_fp: getDeviceFingerprint(),
+        anonymous_id: deviceId, // Kept for legacy ingestion tolerance
         session_id: getSessionId(),
         user_id: this.userId,
         event_id: generateUUID(),
