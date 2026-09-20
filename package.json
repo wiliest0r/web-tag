@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "web-tag",
   "version": "0.1.0",
   "description": "Ultra-lightweight analytics and telemetry web tag",
@@ -10,7 +10,7 @@
     "test": "node --test test/*.test.js"
   },
   "devDependencies": {
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.25.0",
     "eslint": "^9.0.0"
   },
   "license": "MIT"

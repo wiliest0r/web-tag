@@ -1,7 +1,8 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert';
 import { getClientSignature, getClientSignals, getDeviceFingerprint } from '../src/fp.js';
 import { getClientId, getDeviceId, getAnonymousId, generateUUID } from '../src/identity.js';
+import { sanitizeUrl } from '../src/context.js';
 
 test('fp: generates deterministic 64-bit hex hash', () => {
   const sig1 = getClientSignature();
@@ -34,4 +35,13 @@ test('identity: generates and retrieves valid client_id UUID', () => {
   const anonId = getAnonymousId();
   assert.strictEqual(clientId, deviceId);
   assert.strictEqual(clientId, anonId);
+});
+test('context: sanitizeUrl redacts sensitive query parameters', () => {
+  const dirtyUrl = 'https://example.com/checkout?token=secret123&auth=bearer_abc&utm_source=google&password=super_secret_123';
+  const cleanUrl = sanitizeUrl(dirtyUrl);
+  assert.ok(!cleanUrl.includes('secret123'));
+  assert.ok(!cleanUrl.includes('bearer_abc'));
+  assert.ok(!cleanUrl.includes('super_secret_123'));
+  assert.ok(cleanUrl.includes('token=%5BREDACTED%5D') || cleanUrl.includes('token=[REDACTED]'));
+  assert.ok(cleanUrl.includes('utm_source=google'));
 });
