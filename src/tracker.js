@@ -1,6 +1,6 @@
 import { getClientId, getSessionId, generateUUID } from './identity.js';
 import { getClientSignature, loadExtendedFingerprint } from './fp.js';
-import { getClientContext } from './context.js';
+import { getClientContext, sanitizeUrl } from './context.js';
 import { sendPayload } from './transport.js';
 import { initPerformanceMonitoring } from './performance.js';
 import { initErrorMonitoring } from './errors.js';
@@ -111,12 +111,17 @@ export class Tracker {
       const target = event.target.closest('a, button, [data-track-click]');
       if (!target) return;
 
+      // Privacy: mask text if target is an input/password or has data-privacy="masked"
+      const isSensitive = target.matches('input[type="password"], [data-privacy="masked"], [data-masked]');
+      const rawText = (!isSensitive && target.innerText) ? target.innerText.slice(0, 50).trim() : null;
+      const rawHref = target.getAttribute('href');
+
       this.track('click', {
         tag_name: target.tagName.toLowerCase(),
         element_id: target.id || null,
         element_class: target.className || null,
-        text: target.innerText ? target.innerText.slice(0, 50).trim() : null,
-        href: target.getAttribute('href') || null
+        text: rawText,
+        href: rawHref ? sanitizeUrl(rawHref) : null
       });
     }, { capture: true, passive: true });
   }
