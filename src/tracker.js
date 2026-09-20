@@ -1,5 +1,5 @@
-import { getDeviceId, getSessionId, generateUUID } from './identity.js';
-import { getDeviceFingerprint, loadExtendedFingerprint } from './fp.js';
+import { getClientId, getSessionId, generateUUID } from './identity.js';
+import { getClientSignature, loadExtendedFingerprint } from './fp.js';
 import { getClientContext } from './context.js';
 import { sendPayload } from './transport.js';
 import { initPerformanceMonitoring } from './performance.js';
@@ -9,17 +9,17 @@ import { ConsentManager, ManualAdapter } from './consent.js';
 
 export class Tracker {
   constructor() {
-    this.appId = null;
+    this.tagId = null;
     this.endpoint = null;
     this.userId = null;
     this.initialized = false;
     this.consentManager = null;
   }
 
-  init(appId, options = {}) {
+  init(tagId, options = {}) {
     if (this.initialized) return;
 
-    this.appId = appId;
+    this.tagId = tagId || options.tagId || options.measurementId || options.appId;
     this.endpoint = options.endpoint || '/v1/sync';
     this.userId = options.userId || null;
 
@@ -32,7 +32,7 @@ export class Tracker {
     this.initialized = true;
 
     // Optionally schedule background extended fingerprinting without blocking
-    if (options.extendedFp !== false) {
+    if (options.extendedSig !== false && options.extendedFp !== false) {
       loadExtendedFingerprint();
     }
 
@@ -67,19 +67,26 @@ export class Tracker {
     if (!this.initialized) return;
 
     const dispatch = () => {
-      const deviceId = getDeviceId();
+      const clientId = getClientId();
+      const sig = getClientSignature();
+
       const payload = {
-        app_id: this.appId,
-        device_id: deviceId,
-        device_fp: getDeviceFingerprint(),
-        anonymous_id: deviceId, // Kept for legacy ingestion tolerance
+        tag_id: this.tagId,
+        measurement_id: this.tagId,
+        client_id: clientId,
+        sig,
         session_id: getSessionId(),
         user_id: this.userId,
         event_id: generateUUID(),
         event_name: eventName,
         client_timestamp: new Date().toISOString(),
         context: getClientContext(),
-        properties
+        properties,
+        // Ingestion fallback aliases
+        app_id: this.tagId,
+        device_id: clientId,
+        device_fp: sig,
+        anonymous_id: clientId
       };
       sendPayload(this.endpoint, payload);
     };

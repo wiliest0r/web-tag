@@ -1,10 +1,11 @@
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-const DEVICE_ID_KEY = '_op_device_id';
+const CLIENT_ID_KEY = '_op_cid';
+const LEGACY_DEVICE_KEY = '_op_device_id';
 const LEGACY_ANON_KEY = '_op_anon_id';
 const SESSION_KEY = '_op_session_id';
 const SESSION_TS_KEY = '_op_session_ts';
 
-let inMemoryDeviceId = null;
+let inMemoryClientId = null;
 let inMemorySessionId = null;
 let inMemorySessionTs = 0;
 
@@ -20,32 +21,41 @@ export function generateUUID() {
 }
 
 /**
- * Returns a persistent physical device identifier.
- * Checks _op_device_id -> fallback to legacy _op_anon_id -> in-memory fallback.
+ * Returns a persistent unique client identifier (GA4/Segment client_id standard).
+ * Checks _op_cid -> fallback to _op_device_id -> fallback to _op_anon_id -> in-memory cache.
  */
-export function getDeviceId() {
-  if (inMemoryDeviceId) return inMemoryDeviceId;
+export function getClientId() {
+  if (inMemoryClientId) return inMemoryClientId;
   try {
-    let id = (typeof localStorage !== 'undefined' && (localStorage.getItem(DEVICE_ID_KEY) || localStorage.getItem(LEGACY_ANON_KEY))) || null;
+    let id = (typeof localStorage !== 'undefined' && (
+      localStorage.getItem(CLIENT_ID_KEY) ||
+      localStorage.getItem(LEGACY_DEVICE_KEY) ||
+      localStorage.getItem(LEGACY_ANON_KEY)
+    )) || null;
+
     if (!id) {
       id = generateUUID();
     }
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(DEVICE_ID_KEY, id);
+      localStorage.setItem(CLIENT_ID_KEY, id);
     }
-    inMemoryDeviceId = id;
+    inMemoryClientId = id;
     return id;
   } catch {
-    inMemoryDeviceId = generateUUID();
-    return inMemoryDeviceId;
+    inMemoryClientId = generateUUID();
+    return inMemoryClientId;
   }
 }
 
 /**
- * Backwards compatibility alias for getDeviceId()
+ * Backwards compatibility aliases
  */
+export function getDeviceId() {
+  return getClientId();
+}
+
 export function getAnonymousId() {
-  return getDeviceId();
+  return getClientId();
 }
 
 export function getSessionId() {
