@@ -1,15 +1,14 @@
 /**
- * Fast, zero-dependency client-side device & browser fingerprinting.
- * Combines Canvas 2D geometry/sub-pixel rendering, screen dimensions,
- * hardware concurrency, timezone, locale, and touch points.
+ * Fast, zero-dependency browser signature & environmental entropy module.
+ * Collects Canvas 2D subpixel rendering, screen dimensions, CPU cores,
+ * timezone, locale, and touch points, outputting a compact 64-bit hash.
  */
 
-let cachedFingerprint = null;
+let cachedSignature = null;
 let cachedSignals = null;
 
 /**
  * 64-bit FNV-1a hash function returning a 16-character hex string.
- * Lightweight, fast, and collision-resistant for entropy strings.
  */
 function fnv1a64(str) {
   let h1 = 0x811c9dc5;
@@ -55,9 +54,9 @@ function getCanvasEntropy() {
 }
 
 /**
- * Collect raw device signals and hardware entropy.
+ * Collect raw client environmental signals.
  */
-export function getDeviceSignals() {
+export function getClientSignals() {
   if (cachedSignals) return cachedSignals;
 
   const nav = typeof navigator !== 'undefined' ? navigator : {};
@@ -82,12 +81,12 @@ export function getDeviceSignals() {
 }
 
 /**
- * Returns a persistent 64-bit device fingerprint hash.
+ * Returns a 64-bit client signature hash (sig).
  */
-export function getDeviceFingerprint() {
-  if (cachedFingerprint) return cachedFingerprint;
+export function getClientSignature() {
+  if (cachedSignature) return cachedSignature;
 
-  const s = getDeviceSignals();
+  const s = getClientSignals();
   const rawString = [
     s.screen,
     s.pixel_ratio,
@@ -100,13 +99,16 @@ export function getDeviceFingerprint() {
     s.canvas_hash
   ].join(':::');
 
-  cachedFingerprint = fnv1a64(rawString);
-  return cachedFingerprint;
+  cachedSignature = fnv1a64(rawString);
+  return cachedSignature;
 }
 
+// Backwards-compatible aliases
+export const getDeviceSignals = getClientSignals;
+export const getDeviceFingerprint = getClientSignature;
+
 /**
- * Extended asynchronous tier: optionally queries deeper signals
- * (e.g. WebGL unmasked GPU vendor/renderer) without blocking the main thread.
+ * Extended asynchronous tier: queries WebGL GPU vendor/renderer in idle time.
  */
 export function loadExtendedFingerprint(callback) {
   if (typeof window === 'undefined') return;
@@ -130,10 +132,10 @@ export function loadExtendedFingerprint(callback) {
       // Ignore WebGL permission/context errors
     }
 
-    const extendedFp = fnv1a64(`${getDeviceFingerprint()}:::${glVendor}:::${glRenderer}`);
+    const extendedFp = fnv1a64(`${getClientSignature()}:::${glVendor}:::${glRenderer}`);
     if (typeof callback === 'function') {
       callback({
-        extended_fp: extendedFp,
+        extended_sig: extendedFp,
         gpu_vendor: glVendor,
         gpu_renderer: glRenderer
       });

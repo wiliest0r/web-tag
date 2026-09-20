@@ -8,9 +8,13 @@ export function sendPayload(endpoint, payload) {
   }
 
   if (typeof fetch !== 'undefined') {
+    const headers = { 'Content-Type': 'application/json' };
+    if (payload && (payload.tag_id || payload.measurement_id)) {
+      headers['X-Tag-ID'] = payload.tag_id || payload.measurement_id;
+    }
     fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: data,
       keepalive: true
     }).catch(() => {
